@@ -22,7 +22,38 @@
                ])>
                 Dashboard
             </a>
-            {{-- পরের module-এর menu item এখানে যোগ হবে --}}
+            <a href="{{ route('admin.profile.edit') }}"
+               @class([
+                   'block rounded-md px-3 py-2 text-sm font-medium',
+                   'bg-slate-800 text-white' => request()->routeIs('admin.profile.*'),
+                   'hover:bg-slate-800' => ! request()->routeIs('admin.profile.*'),
+               ])>
+                Profile
+            </a>
+            <a href="{{ route('admin.sections.index') }}"
+               @class([
+                   'block rounded-md px-3 py-2 text-sm font-medium',
+                   'bg-slate-800 text-white' => request()->routeIs('admin.sections.*'),
+                   'hover:bg-slate-800' => ! request()->routeIs('admin.sections.*'),
+               ])>
+                Sections
+            </a>
+            <a href="{{ route('admin.social-links.index') }}"
+               @class([
+                   'block rounded-md px-3 py-2 text-sm font-medium',
+                   'bg-slate-800 text-white' => request()->routeIs('admin.social-links.*'),
+                   'hover:bg-slate-800' => ! request()->routeIs('admin.social-links.*'),
+               ])>
+                Social links
+            </a>
+            <a href="{{ route('admin.settings.edit') }}"
+               @class([
+                   'block rounded-md px-3 py-2 text-sm font-medium',
+                   'bg-slate-800 text-white' => request()->routeIs('admin.settings.*'),
+                   'hover:bg-slate-800' => ! request()->routeIs('admin.settings.*'),
+               ])>
+                Settings
+            </a>
         </nav>
     </aside>
 
