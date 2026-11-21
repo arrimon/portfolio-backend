@@ -1,65 +1,146 @@
 <x-layouts.admin
     title="Social links"
+    subtitle="Manage the links shown in your public footer and contact areas."
     :breadcrumbs="[
         ['label' => 'Dashboard', 'url' => route('admin.dashboard')],
         ['label' => 'Social links'],
     ]"
 >
-    <div class="mb-6 flex items-center justify-end">
-        <a href="{{ route('admin.social-links.create') }}" class="rounded bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">Add link</a>
-    </div>
+    @php
+        $ids = $links->pluck('id')->all();
+        $platforms = config('portfolio.social_platforms');
+        $platformIcons = [
+            'github' => 'github',
+            'linkedin' => 'linkedin',
+            'x' => 'twitter',
+            'facebook' => 'facebook',
+            'instagram' => 'instagram',
+            'youtube' => 'youtube',
+            'email' => 'mail',
+            'website' => 'globe',
+        ];
+    @endphp
 
-    @php $ids = $links->pluck('id')->all(); $platforms = config('portfolio.social_platforms'); @endphp
+    <x-ui.card :padded="false">
+        <x-slot:header>
+            <div class="flex w-full flex-wrap items-center justify-between gap-3">
+                <div class="min-w-0 flex-1">
+                    <h2 class="text-sm font-semibold text-slate-900">Social links</h2>
+                    <p class="mt-0.5 text-sm text-slate-500">Manage the links shown in your public footer and contact areas.</p>
+                </div>
+                <div class="flex shrink-0 items-center gap-2">
+                    <x-ui.badge variant="muted">{{ $links->count() }} links</x-ui.badge>
+                    <x-ui.button :href="route('admin.social-links.create')">
+                        <x-ui.icon name="plus" class="size-4" />
+                        Add link
+                    </x-ui.button>
+                </div>
+            </div>
+        </x-slot:header>
 
-    <div class="overflow-hidden rounded-lg border border-gray-200 bg-white">
-        <table class="w-full text-sm">
-            <thead class="bg-gray-50 text-left text-xs uppercase text-gray-500">
+        <x-ui.table>
+            <x-slot:head>
                 <tr>
-                    <th class="px-4 py-2">Order</th>
-                    <th class="px-4 py-2">Platform</th>
-                    <th class="px-4 py-2">URL</th>
-                    <th class="px-4 py-2">Status</th>
-                    <th class="px-4 py-2"></th>
+                    <th scope="col">Order</th>
+                    <th scope="col">Platform</th>
+                    <th scope="col">URL</th>
+                    <th scope="col">Status</th>
+                    <th scope="col" class="text-right">Actions</th>
                 </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-100">
-                @forelse ($links as $i => $link)
-                    <tr>
-                        <td class="px-4 py-2">
-                            @foreach (['up' => [-1, '↑'], 'down' => [1, '↓']] as $dir => [$delta, $icon])
+            </x-slot:head>
+
+            @forelse ($links as $i => $link)
+                <tr class="[&>td]:py-2!">
+                    <td>
+                        <div class="flex items-center gap-0.5">
+                            @foreach (['up' => [-1, 'arrow-up'], 'down' => [1, 'arrow-down']] as $dir => [$delta, $icon])
                                 @if (isset($ids[$i + $delta]))
-                                    @php $new = $ids; [$new[$i], $new[$i + $delta]] = [$new[$i + $delta], $new[$i]]; @endphp
-                                    <form method="POST" action="{{ route('admin.social-links.reorder') }}" class="inline">
+                                    @php
+                                        $new = $ids;
+                                        [$new[$i], $new[$i + $delta]] = [$new[$i + $delta], $new[$i]];
+                                    @endphp
+                                    <form method="POST" action="{{ route('admin.social-links.reorder') }}" class="inline-flex">
                                         @csrf
                                         @foreach ($new as $id)
                                             <input type="hidden" name="order[]" value="{{ $id }}">
                                         @endforeach
-                                        <button class="rounded border px-2 py-0.5 hover:bg-gray-100" aria-label="Move {{ $dir }}">{{ $icon }}</button>
+                                        <x-ui.button type="submit" variant="ghost" size="icon" class="size-7!" aria-label="Move {{ $dir }}">
+                                            <x-ui.icon :name="$icon" class="size-3.5" />
+                                        </x-ui.button>
                                     </form>
+                                @else
+                                    <span class="inline-flex size-7 items-center justify-center rounded-lg text-slate-300" aria-hidden="true">
+                                        <x-ui.icon :name="$icon" class="size-3.5" />
+                                    </span>
                                 @endif
                             @endforeach
-                        </td>
-                        <td class="px-4 py-2 font-medium">{{ $platforms[$link->platform] ?? $link->platform }}</td>
-                        <td class="max-w-xs truncate px-4 py-2 text-gray-600">{{ $link->url }}</td>
-                        <td class="px-4 py-2">
-                            <span class="rounded px-2 py-0.5 text-xs {{ $link->is_active ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-700' }}">
-                                {{ $link->is_active ? 'Active' : 'Inactive' }}
+                        </div>
+                    </td>
+
+                    <td class="align-middle">
+                        <div class="flex min-h-8 items-center gap-2">
+                            <span class="inline-flex size-8 shrink-0 items-center justify-center">
+                                <x-ui.icon
+                                    :name="$platformIcons[$link->platform] ?? 'globe'"
+                                    class="size-4"
+                                />
                             </span>
-                        </td>
-                        <td class="px-4 py-2 text-right">
-                            <a href="{{ route('admin.social-links.edit', $link) }}" class="text-indigo-600 hover:underline">Edit</a>
-                            <form method="POST" action="{{ route('admin.social-links.destroy', $link) }}" class="ml-3 inline"
-                                  onsubmit="return confirm('Delete this link?')">
+
+                            <span class="pt-2 font-medium leading-none text-slate-900">
+                                {{ $platforms[$link->platform] ?? $link->platform }}
+                            </span>
+                        </div>
+                    </td>
+
+                    <td>
+                        <a href="{{ $link->url }}" target="_blank" rel="noopener"
+                            class="group inline-flex max-w-xs items-center gap-1.5 font-mono text-xs text-slate-600 transition-colors hover:text-indigo-600"
+                            title="{{ $link->url }}">
+                            <span class="truncate">{{ $link->url }}</span>
+                            <x-ui.icon name="external-link" class="size-3.5 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
+                        </a>
+                    </td>
+
+                    <td>
+                        <x-ui.badge :variant="$link->is_active ? 'success' : 'muted'" :dot="true">
+                            {{ $link->is_active ? 'Active' : 'Inactive' }}
+                        </x-ui.badge>
+                    </td>
+
+                    <td class="text-right">
+                        <div class="flex items-center justify-end gap-0.5">
+                            <x-ui.button :href="route('admin.social-links.edit', $link)" variant="ghost" size="icon"
+                                class="size-7!"
+                                aria-label="Edit {{ $platforms[$link->platform] ?? $link->platform }} link" title="Edit">
+                                <x-ui.icon name="pencil" class="size-4" />
+                            </x-ui.button>
+
+                            <form method="POST" action="{{ route('admin.social-links.destroy', $link) }}" class="inline-flex"
+                                onsubmit="return confirm('Delete this link?')">
                                 @csrf
                                 @method('DELETE')
-                                <button class="text-red-600 hover:underline">Delete</button>
+                                <x-ui.button type="submit" variant="ghost" size="icon"
+                                    class="size-7! text-red-600 hover:bg-red-50 hover:text-red-700"
+                                    aria-label="Delete {{ $platforms[$link->platform] ?? $link->platform }} link" title="Delete">
+                                    <x-ui.icon name="trash" class="size-4" />
+                                </x-ui.button>
                             </form>
-                        </td>
-                    </tr>
-                @empty
-                    <tr><td colspan="5" class="px-4 py-6 text-center text-gray-500">No social links yet.</td></tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
+                        </div>
+                    </td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="5" class="px-5 py-10">
+                        <x-ui.empty-state title="No social links yet"
+                            message="Add your GitHub, LinkedIn, email or any other profile you want to display.">
+                            <x-ui.button :href="route('admin.social-links.create')">
+                                <x-ui.icon name="plus" class="size-4" />
+                                Add your first link
+                            </x-ui.button>
+                        </x-ui.empty-state>
+                    </td>
+                </tr>
+            @endforelse
+        </x-ui.table>
+    </x-ui.card>
 </x-layouts.admin>
